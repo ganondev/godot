@@ -701,17 +701,31 @@ def generate_vs_project(env, num_jobs):
         env["MSVSREBUILDCOM"] = build_commandline("scons vsproj=yes")
         env["MSVSCLEANCOM"] = build_commandline("scons --clean")
 
+        modes = [
+            (
+                #DEFAULT
+                '',
+                '',
+                '',
+                '',
+            ),
+            (
+                'mono', # file name extras and id for config
+                'MONO PATH WHERE IT IS??? :):):):)', # extra includes
+                'module_mono_enabled=yes, mono_glue=yes', # extra cli args
+                [('MONO_GLUE_ENABLED',)], # extra defines
+            ),
+        ]
+
         # This version information (Win32, x64, Debug, Release, Release_Debug seems to be
         # required for Visual Studio to understand that it needs to generate an NMAKE
         # project. Do not modify without knowing what you are doing.
-        debug_variants = ["debug|Win32"] + ["debug|x64"]
-        release_variants = ["release|Win32"] + ["release|x64"]
-        release_debug_variants = ["release_debug|Win32"] + ["release_debug|x64"]
-        variants = debug_variants + release_variants + release_debug_variants
-        debug_targets = ["bin\\godot.windows.tools.32.exe"] + ["bin\\godot.windows.tools.64.exe"]
-        release_targets = ["bin\\godot.windows.opt.32.exe"] + ["bin\\godot.windows.opt.64.exe"]
-        release_debug_targets = ["bin\\godot.windows.opt.tools.32.exe"] + ["bin\\godot.windows.opt.tools.64.exe"]
-        targets = debug_targets + release_targets + release_debug_targets
+        platforms = [ "Win32", "x64" ]
+        configurations = [ "debug", "release", "release_debug" ]
+        variants = [ f'{config}{f"_[{mode[0]}]" if mode[0] else ""}|{platform}' for platform in platforms for config in configurations for mode in modes ]
+        platform_identifiers = [ '32', '64' ]
+        configuration_identifiers = [ 'tools', 'opt', 'opt.tools' ]
+        targets = [ f'bin\\godot.windows.{config_id}.{plat_id}{f".{mode[0]}" if mode[0] else ""}.exe' for plat_id in platform_identifiers for config_id in configuration_identifiers for mode in modes]
         if not env.get("MSVS"):
             env["MSVS"]["PROJECTSUFFIX"] = ".vcxproj"
             env["MSVS"]["SOLUTIONSUFFIX"] = ".sln"
